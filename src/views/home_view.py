@@ -11,6 +11,7 @@ def home_view(page: ft.Page):
         italic=True,
         text_align=ft.TextAlign.CENTER,
     )
+
     def save_vehicles():
         license_plates = [veh.text for veh in vehicles.controls]
         page.client_storage.set("vehicles", license_plates)
@@ -160,6 +161,16 @@ def home_view(page: ft.Page):
                     ],
                 ),
                 expand=True,
+            ),
+            ft.Container(
+                content=ft.Text(
+                    "Press and hold a vehicle to edit or delete it.",
+                    style=ft.TextStyle(color=page.theme.color_scheme.on_background),
+                    text_align=ft.TextAlign.CENTER,
+                    italic=True,
+                ),
+                alignment=ft.alignment.bottom_center,
+                padding=ft.padding.only(bottom=60),
             ),
             ft.AppBar(
                 leading=ft.Icon(ft.Icons.HOME),
