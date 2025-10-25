@@ -125,15 +125,19 @@ def home_view(page: ft.Page):
         "/",
         controls=[
             ft.SafeArea(
-                ft.Container(
-                    content=no_vehicles_text,
-                    alignment=ft.alignment.center,
-                ),
-            ),
-            ft.SafeArea(
-                ft.Container(
-                    content=vehicles,
-                    alignment=ft.alignment.center,
+                ft.Stack(
+                    [
+                        ft.Container(
+                            content=no_vehicles_text,
+                            alignment=ft.alignment.center,
+                            expand=True,
+                        ),
+                        ft.Container(
+                            content=vehicles,
+                            alignment=ft.alignment.center,
+                            expand=True,
+                        ),
+                    ],
                 ),
                 expand=True,
             ),
