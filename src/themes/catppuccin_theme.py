@@ -52,4 +52,7 @@ def catppuccin_theme(theme_mode: str) -> ft.Theme:
             bgcolor=flavor["base"],
             foreground_color=primary_color,
         ),
+        badge_theme=ft.BadgeTheme(
+            bgcolor=secondary_color,
+        ),
     )
