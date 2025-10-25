@@ -18,6 +18,10 @@ def home_view(page: ft.Page):
         italic=True,
     )
 
+    def delete_events(license_plate):
+        new_events = [e for e in page.client_storage.get("events") or [] if e["vehicle"] != license_plate]
+        page.client_storage.set("events", new_events)
+
     def save_vehicles():
         license_plates = [veh.text for veh in vehicles.controls]
         page.client_storage.set("vehicles", license_plates)
@@ -73,6 +77,11 @@ def home_view(page: ft.Page):
     def confirm_add_vehicle(e=None):
         label = license_plate_input.value.strip()
         if label:
+            if label in page.client_storage.get("vehicles"):
+                license_plate_input.error_text = "Vehicle already exists."
+                page.update()
+                return
+            license_plate_input.error_text = None
             add_vehicle(label)
         close_new_vehicle_dialog()
 
@@ -117,6 +126,7 @@ def home_view(page: ft.Page):
             nonlocal vehicle_count
             vehicle_count -= 1
             vehicles.controls = [veh for veh in vehicles.controls if veh.text != vehicle_button.text]
+            delete_events(vehicle_button.text)
             save_vehicles()
             update_empty_state()
             page.update()

@@ -114,6 +114,12 @@ def vehicle_view(page: ft.Page, license_plate: str):
     def confirm_add_event(e=None):
         label = event_dropdown.value.strip()
         if label:
+            for e in page.client_storage.get("events") or []:
+                if e["label"] == label and e["vehicle"] == license_plate:
+                    event_dropdown.error_text = f"{label} already exists\nfor this vehicle."
+                    page.update()
+                    return
+            event_dropdown.error_text = None
             add_event(label, selected_date)
         close_add_event_dialog()
 
@@ -123,6 +129,11 @@ def vehicle_view(page: ft.Page, license_plate: str):
     ]
 
     def open_add_event_dialog(e):
+        event_dropdown.value = None
+        event_dropdown.error_text = None
+        nonlocal selected_date, selected_date_label
+        selected_date = None
+        selected_date_label.value = "Selected date: Please select."
         page.open(add_event_dialog)
 
     def on_resize(e):
