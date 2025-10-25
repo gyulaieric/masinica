@@ -75,9 +75,14 @@ def home_view(page: ft.Page):
         page.close(new_vehicle_dialog)
 
     def confirm_add_vehicle(e=None):
+        if license_plate_input is None:
+            license_plate_input.error_text = "License plate\ncannot be empty."
+            page.update()
+            return
         label = license_plate_input.value.strip()
         if label:
-            if label in page.client_storage.get("vehicles"):
+            saved_vehicles = page.client_storage.get("vehicles") or []
+            if label in saved_vehicles:
                 license_plate_input.error_text = "Vehicle already exists."
                 page.update()
                 return
