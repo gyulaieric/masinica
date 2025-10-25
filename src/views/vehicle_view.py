@@ -66,6 +66,11 @@ def vehicle_view(page: ft.Page, license_plate: str):
         update_empty_state()
         page.update()
 
+
+    def update_event_dropdown(e):
+        e.control.error_text = None
+        page.update()
+        
     event_dropdown = ft.Dropdown(
         label="Event Type",
         options=[
@@ -73,23 +78,25 @@ def vehicle_view(page: ft.Page, license_plate: str):
             ft.dropdown.Option("CASCO"),
             ft.dropdown.Option("ITP"),
             ft.dropdown.Option("ROVINIETA"),
-        ]
+        ],
+        on_change=update_event_dropdown,
     )
 
-    selected_date_label = ft.Text("Selected date: Please select.")
     def update_date(e):
-        nonlocal selected_date, selected_date_label
+        nonlocal selected_date
         selected_date = e.control.value
-        selected_date_label.value = f"Selected date: {e.control.value.strftime('%d/%m/%Y')}"
+        date_picker.bgcolor = None
+        date_picker.style = None
+        date_picker.text = f"{e.control.value.strftime('%d/%m/%Y')}"
         page.update()
 
     date_picker = ft.ElevatedButton(
-            "Pick expiration date",
+            text="Select expiration date.",
             icon=ft.Icons.CALENDAR_MONTH,
             on_click=lambda e: page.open(
                 ft.DatePicker(
-                    first_date=datetime(year=2000, month=1, day=1),
-                    last_date=datetime(year=3000, month=12, day=31),
+                    first_date=datetime.today(),
+                    last_date=datetime(year=9999, month=12, day=31),
                     on_change=update_date,
                 )
             ),
@@ -102,7 +109,6 @@ def vehicle_view(page: ft.Page, license_plate: str):
             [
                 event_dropdown,
                 date_picker,
-                selected_date_label,
             ],
             tight=True,
         ),
@@ -112,15 +118,29 @@ def vehicle_view(page: ft.Page, license_plate: str):
         page.close(add_event_dialog)
 
     def confirm_add_event(e=None):
+        if event_dropdown.value is None:
+            event_dropdown.error_text = "Please select\nan event type."
+            page.update()
+            return
         label = event_dropdown.value.strip()
-        if label:
-            for e in page.client_storage.get("events") or []:
-                if e["label"] == label and e["vehicle"] == license_plate:
-                    event_dropdown.error_text = f"{label} already exists\nfor this vehicle."
-                    page.update()
-                    return
-            event_dropdown.error_text = None
-            add_event(label, selected_date)
+
+        for event in page.client_storage.get("events") or []:
+            if event["label"] == label and event["vehicle"] == license_plate:
+                event_dropdown.error_text = f"{label} already exists\nfor this vehicle."
+                page.update()
+                return
+
+        if selected_date is None:
+            date_picker.text = "Please select an expiration date."
+            date_picker.bgcolor = page.theme.color_scheme.error
+            date_picker.style = ft.ButtonStyle(
+                color=page.theme.color_scheme.on_error,
+                icon_color=page.theme.color_scheme.on_error
+            )
+            page.update()
+            return
+            
+        add_event(label, selected_date)
         close_add_event_dialog()
 
     add_event_dialog.actions = [
@@ -131,9 +151,11 @@ def vehicle_view(page: ft.Page, license_plate: str):
     def open_add_event_dialog(e):
         event_dropdown.value = None
         event_dropdown.error_text = None
-        nonlocal selected_date, selected_date_label
+        nonlocal selected_date
         selected_date = None
-        selected_date_label.value = "Selected date: Please select."
+        date_picker.text = "Select expiration date."
+        date_picker.bgcolor = None
+        date_picker.style = None
         page.open(add_event_dialog)
 
     def on_resize(e):
