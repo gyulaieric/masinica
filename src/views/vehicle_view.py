@@ -127,6 +127,10 @@ def vehicle_view(page: ft.Page, license_plate: str):
                 ),
                 expand=True,
             ),
+            ft.AppBar(
+                title=ft.Text(license_plate),
+                leading=ft.IconButton(ft.Icons.ARROW_BACK, on_click=lambda _: page.go("/")),
+            ),
         ],
         floating_action_button = ft.FloatingActionButton(
             icon=ft.Icons.ADD,

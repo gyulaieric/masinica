@@ -141,6 +141,9 @@ def home_view(page: ft.Page):
                 ),
                 expand=True,
             ),
+            ft.AppBar(
+                leading=ft.Icon(ft.Icons.HOME),
+            ),
         ],
         floating_action_button = ft.FloatingActionButton(
             icon=ft.Icons.ADD,
