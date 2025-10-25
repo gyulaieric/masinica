@@ -11,6 +11,12 @@ def home_view(page: ft.Page):
         italic=True,
         text_align=ft.TextAlign.CENTER,
     )
+    helper_text = ft.Text(
+        "Press and hold a vehicle to edit or delete it.",
+        style=ft.TextStyle(color=page.theme.color_scheme.on_background),
+        text_align=ft.TextAlign.CENTER,
+        italic=True,
+    )
 
     def save_vehicles():
         license_plates = [veh.text for veh in vehicles.controls]
@@ -24,6 +30,7 @@ def home_view(page: ft.Page):
     def update_empty_state():
         saved_vehicles = page.client_storage.get("vehicles") or []
         no_vehicles_text.visible = len(saved_vehicles) == 0
+        helper_text.visible = len(saved_vehicles) > 0
         page.update()
 
     def open_vehicle(e):
@@ -109,9 +116,9 @@ def home_view(page: ft.Page):
             vehicles.controls.remove(vehicle_button)
             nonlocal vehicle_count
             vehicle_count -= 1
-            update_empty_state()
             vehicles.controls = [veh for veh in vehicles.controls if veh.text != vehicle_button.text]
             save_vehicles()
+            update_empty_state()
             page.update()
             close_edit_vehicle_dialog() 
 
@@ -163,12 +170,7 @@ def home_view(page: ft.Page):
                 expand=True,
             ),
             ft.Container(
-                content=ft.Text(
-                    "Press and hold a vehicle to edit or delete it.",
-                    style=ft.TextStyle(color=page.theme.color_scheme.on_background),
-                    text_align=ft.TextAlign.CENTER,
-                    italic=True,
-                ),
+                content=(helper_text),
                 alignment=ft.alignment.bottom_center,
                 padding=ft.padding.only(bottom=60),
             ),
