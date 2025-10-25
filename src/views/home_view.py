@@ -98,14 +98,19 @@ def home_view(page: ft.Page):
             close_edit_vehicle_dialog() 
 
         edit_vehicle_dialog.actions = [
-            ft.TextButton(
-                "Delete", icon=ft.Icons.DELETE_OUTLINE,
-                on_click=delete_vehicle,
-                icon_color=page.theme.color_scheme.error,
-                style=ft.ButtonStyle(color=page.theme.color_scheme.error),
+            ft.Row(
+                [
+                    ft.IconButton(
+                        icon=ft.Icons.DELETE_OUTLINE,
+                        icon_color=page.theme.color_scheme.error,
+                        on_click=delete_vehicle
+                        ),
+                    ft.Container(expand=True),
+                    ft.TextButton("Cancel", on_click=close_edit_vehicle_dialog),
+                    ft.TextButton("Save", on_click=confirm_edit_vehicle),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
             ),
-            ft.TextButton("Cancel", on_click=close_edit_vehicle_dialog),
-            ft.TextButton("Save", on_click=confirm_edit_vehicle),
         ]
 
         page.open(edit_vehicle_dialog)
