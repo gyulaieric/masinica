@@ -11,6 +11,20 @@ def home_view(page: ft.Page):
         italic=True,
         text_align=ft.TextAlign.CENTER,
     )
+    def save_vehicles():
+        license_plates = [veh.text for veh in vehicles.controls]
+        page.client_storage.set("vehicles", license_plates)
+
+    def load_vehicles():
+        saved_vehicles = page.client_storage.get("vehicles") or []
+        for license_plate in saved_vehicles:
+            vehicles.controls.append(create_vehicle(license_plate))
+
+    def update_empty_state():
+        saved_vehicles = page.client_storage.get("vehicles") or []
+        no_vehicles_text.visible = len(saved_vehicles) == 0
+        page.update()
+
     def open_vehicle(e):
         page.go(f"/vehicle/{e.control.text}")
 
@@ -28,7 +42,8 @@ def home_view(page: ft.Page):
         nonlocal vehicle_count
         vehicle_count += 1
         vehicles.controls.append(create_vehicle(label))
-        no_vehicles_text.visible = vehicle_count == 0
+        save_vehicles()
+        update_empty_state()
         page.update()
 
     # New vehicle dialog
@@ -93,7 +108,9 @@ def home_view(page: ft.Page):
             vehicles.controls.remove(vehicle_button)
             nonlocal vehicle_count
             vehicle_count -= 1
-            no_vehicles_text.visible = vehicle_count == 0
+            update_empty_state()
+            vehicles.controls = [veh for veh in vehicles.controls if veh.text != vehicle_button.text]
+            save_vehicles()
             page.update()
             close_edit_vehicle_dialog() 
 
@@ -120,6 +137,9 @@ def home_view(page: ft.Page):
             veh.width = page.width * 0.8
         page.update()
     page.on_resize = on_resize
+
+    load_vehicles()
+    update_empty_state()
 
     return ft.View(
         "/",
