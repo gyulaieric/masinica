@@ -23,7 +23,7 @@ def catppuccin_theme(theme_mode: str) -> ft.Theme:
             on_primary=flavor["base"],
             secondary=secondary_color,
             on_secondary=flavor["base"],
-            tertiary=flavor["green"],
+            tertiary=flavor["yellow"],
             on_tertiary=flavor["base"],
             surface=flavor["mantle"],
             on_surface=text_color,
@@ -38,6 +38,7 @@ def catppuccin_theme(theme_mode: str) -> ft.Theme:
             inverse_surface=flavor["crust"],
             on_inverse_surface=flavor["subtext1"],
             surface_tint=primary_color,
+            
         ),
         text_theme=ft.TextTheme(
             body_small=ft.TextStyle(color=text_color),
