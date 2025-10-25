@@ -16,6 +16,29 @@ def vehicle_view(page: ft.Page, license_plate: str):
         text_align=ft.TextAlign.CENTER,
     )
 
+    def save_event(label, expiration_date):
+        saved_events = page.client_storage.get("events") or []
+        saved_events.append({
+            "vehicle": license_plate,
+            "label": label,
+            "expiration_date": expiration_date.isoformat(),
+        })
+        page.client_storage.set("events", saved_events)
+
+    def load_events():
+        saved_events = page.client_storage.get("events") or []
+        for e in saved_events:
+            if e["vehicle"] != license_plate:
+                continue
+            label = e["label"]
+            expiration_date = datetime.fromisoformat(e["expiration_date"])
+            events.controls.append(create_event(label, expiration_date))
+
+    def update_empty_state():
+        saved_events = [e for e in page.client_storage.get("events") or [] if e["vehicle"] == license_plate] or []
+        no_events_text.visible = len(saved_events) == 0
+        page.update()
+
     def create_event(label, expiration_date):
         remaining_days = (expiration_date - datetime.now()).days + 1
         badge_color = None
@@ -38,8 +61,9 @@ def vehicle_view(page: ft.Page, license_plate: str):
     def add_event(label, expiration_date):
         nonlocal event_count
         event_count += 1
+        save_event(label, expiration_date)
         events.controls.append(create_event(label, expiration_date))
-        no_events_text.visible = event_count == 0
+        update_empty_state()
         page.update()
 
     event_dropdown = ft.Dropdown(
@@ -106,6 +130,9 @@ def vehicle_view(page: ft.Page, license_plate: str):
             veh.width = page.width * 0.8
         page.update()
     page.on_resize = on_resize
+
+    load_events()
+    update_empty_state()
 
     return ft.View(
         f"/vehicle/{license_plate}",
