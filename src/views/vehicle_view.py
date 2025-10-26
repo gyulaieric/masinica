@@ -15,6 +15,12 @@ def vehicle_view(page: ft.Page, license_plate: str) -> ft.View:
         italic=True,
         text_align=ft.TextAlign.CENTER,
     )
+    helper_text = ft.Text(
+        "Tap an event to view or edit it.",
+        style=ft.TextStyle(color=page.theme.color_scheme.on_background),
+        text_align=ft.TextAlign.CENTER,
+        italic=True,
+    )
 
     # --- storage helpers ---
     def _get_saved_events() -> List[Dict]:
@@ -54,6 +60,7 @@ def vehicle_view(page: ft.Page, license_plate: str) -> ft.View:
             ),
             width=page.width * 0.8,
             height=50,
+            on_click=lambda e: page.go(f"/vehicle/{license_plate}/{label}"),
         )
 
     def load_events() -> None:
@@ -68,6 +75,7 @@ def vehicle_view(page: ft.Page, license_plate: str) -> ft.View:
     def update_empty_state() -> None:
         has = any(e.get("vehicle") == license_plate for e in _get_saved_events())
         no_events_text.visible = not has
+        helper_text.visible = has
         page.update()
 
     # --- event dialog controls ---
@@ -185,6 +193,11 @@ def vehicle_view(page: ft.Page, license_plate: str) -> ft.View:
                     ],
                 ),
                 expand=True,
+            ),
+            ft.Container(
+                content=(helper_text),
+                alignment=ft.alignment.bottom_center,
+                padding=ft.padding.only(bottom=60),
             ),
             ft.AppBar(
                 title=ft.Text(license_plate),
