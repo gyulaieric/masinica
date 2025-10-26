@@ -1,9 +1,11 @@
 import flet as ft
-def home_view(page: ft.Page):
+from typing import List, Dict, Optional
+
+
+def home_view(page: ft.Page) -> ft.View:
     page.title = "Mașinică - Vehicles"
 
     vehicles = ft.Column(spacing=20)
-    vehicle_count = 0
 
     no_vehicles_text = ft.Text(
         'No vehicles added yet.\nClick the "+" button to add a new vehicle.',
@@ -18,29 +20,44 @@ def home_view(page: ft.Page):
         italic=True,
     )
 
-    def delete_events(license_plate):
-        new_events = [e for e in page.client_storage.get("events") or [] if e["vehicle"] != license_plate]
-        page.client_storage.set("events", new_events)
+    # --- storage helpers ---
+    def _get_saved_vehicles() -> List[str]:
+        return page.client_storage.get("vehicles") or []
 
-    def save_vehicles():
-        license_plates = [veh.text for veh in vehicles.controls]
-        page.client_storage.set("vehicles", license_plates)
+    def _set_saved_vehicles(plates: List[str]) -> None:
+        page.client_storage.set("vehicles", plates)
 
-    def load_vehicles():
-        saved_vehicles = page.client_storage.get("vehicles") or []
+    def _get_saved_events() -> List[Dict]:
+        return page.client_storage.get("events") or []
+
+    def _set_saved_events(evts: List[Dict]) -> None:
+        page.client_storage.set("events", evts)
+
+    def delete_events(license_plate: str) -> None:
+        new_events = [e for e in _get_saved_events() if e.get("vehicle") != license_plate]
+        _set_saved_events(new_events)
+
+    def save_vehicles() -> None:
+        license_plates = [getattr(veh, "text", None) for veh in vehicles.controls]
+        license_plates = [p for p in license_plates if p]
+        _set_saved_vehicles(license_plates)
+
+    def load_vehicles() -> None:
+        vehicles.controls.clear()
+        saved_vehicles = _get_saved_vehicles()
         for license_plate in saved_vehicles:
             vehicles.controls.append(create_vehicle(license_plate))
 
-    def update_empty_state():
-        saved_vehicles = page.client_storage.get("vehicles") or []
+    def update_empty_state() -> None:
+        saved_vehicles = _get_saved_vehicles()
         no_vehicles_text.visible = len(saved_vehicles) == 0
         helper_text.visible = len(saved_vehicles) > 0
         page.update()
 
-    def open_vehicle(e):
+    def open_vehicle(e: ft.ControlEvent) -> None:
         page.go(f"/vehicle/{e.control.text}")
 
-    def create_vehicle(label):
+    def create_vehicle(label: str) -> ft.Control:
         return ft.ElevatedButton(
             icon=ft.Icons.DIRECTIONS_CAR,
             text=label,
@@ -49,10 +66,8 @@ def home_view(page: ft.Page):
             on_click=open_vehicle,
             on_long_press=open_edit_vehicle_dialog,
         )
-    
-    def add_vehicle(label):
-        nonlocal vehicle_count
-        vehicle_count += 1
+
+    def add_vehicle(label: str) -> None:
         vehicles.controls.append(create_vehicle(label))
         save_vehicles()
         update_empty_state()
@@ -64,30 +79,31 @@ def home_view(page: ft.Page):
         autofocus=True,
         capitalization=ft.TextCapitalization.CHARACTERS,
     )
-    
+
     new_vehicle_dialog = ft.AlertDialog(
         modal=True,
         title=ft.Text("New Vehicle"),
         content=license_plate_input,
     )
 
-    def close_new_vehicle_dialog(e=None):
+    def close_new_vehicle_dialog(e: Optional[ft.ControlEvent] = None) -> None:
         page.close(new_vehicle_dialog)
 
-    def confirm_add_vehicle(e=None):
-        if license_plate_input is None:
+    def confirm_add_vehicle(e: Optional[ft.ControlEvent] = None) -> None:
+        value = (license_plate_input.value or "").strip()
+        if not value:
             license_plate_input.error_text = "License plate\ncannot be empty."
             page.update()
             return
-        label = license_plate_input.value.strip()
-        if label:
-            saved_vehicles = page.client_storage.get("vehicles") or []
-            if label in saved_vehicles:
-                license_plate_input.error_text = "Vehicle already exists."
-                page.update()
-                return
-            license_plate_input.error_text = None
-            add_vehicle(label)
+
+        saved_vehicles = _get_saved_vehicles()
+        if value in saved_vehicles:
+            license_plate_input.error_text = "Vehicle already exists."
+            page.update()
+            return
+
+        license_plate_input.error_text = None
+        add_vehicle(value)
         close_new_vehicle_dialog()
 
     new_vehicle_dialog.actions = [
@@ -95,17 +111,19 @@ def home_view(page: ft.Page):
         ft.TextButton("Add", on_click=confirm_add_vehicle),
     ]
 
-    def open_new_vehicle_dialog(e):
+    def open_new_vehicle_dialog(e: ft.ControlEvent) -> None:
         license_plate_input.value = ""
+        license_plate_input.error_text = None
         page.open(new_vehicle_dialog)
-    
+
     # Edit vehicle dialog
-    def open_edit_vehicle_dialog(e):
+    def open_edit_vehicle_dialog(e: ft.ControlEvent) -> None:
         vehicle_button = e.control
+        old_label = vehicle_button.text
 
         edit_license_plate_input = ft.TextField(
             label="Edit license plate number",
-            value=vehicle_button.text,
+            value=old_label,
             autofocus=True,
             capitalization=ft.TextCapitalization.CHARACTERS,
         )
@@ -116,26 +134,53 @@ def home_view(page: ft.Page):
             content=edit_license_plate_input,
         )
 
-        def close_edit_vehicle_dialog(e=None):
+        def close_edit_vehicle_dialog(ev: Optional[ft.ControlEvent] = None) -> None:
             page.close(edit_vehicle_dialog)
 
-        def confirm_edit_vehicle(e=None):
-            new_label = edit_license_plate_input.value.strip()
-            if new_label:
-                vehicle_button.text = new_label
+        def confirm_edit_vehicle(ev: Optional[ft.ControlEvent] = None) -> None:
+            new_label = (edit_license_plate_input.value or "").strip()
+            if not new_label:
+                edit_license_plate_input.error_text = "License plate cannot be empty."
                 page.update()
+                return
+
+            saved_vehicles = _get_saved_vehicles()
+            # If new_label already exists (and isn't the same as old), show error
+            if new_label in saved_vehicles and new_label != old_label:
+                edit_license_plate_input.error_text = "Another vehicle with this plate\nalready exists."
+                page.update()
+                return
+
+            # Update the button text
+            vehicle_button.text = new_label
+
+            # Update saved vehicles list order and persist
+            plates = [getattr(veh, "text", None) for veh in vehicles.controls]
+            plates = [p for p in plates if p]
+            _set_saved_vehicles(plates)
+
+            # Update events related to this vehicle (rename vehicle tag)
+            evts = _get_saved_events()
+            changed = False
+            for item in evts:
+                if item.get("vehicle") == old_label:
+                    item["vehicle"] = new_label
+                    changed = True
+            if changed:
+                _set_saved_events(evts)
+
+            page.update()
             close_edit_vehicle_dialog()
-        
-        def delete_vehicle(e=None):
-            vehicles.controls.remove(vehicle_button)
-            nonlocal vehicle_count
-            vehicle_count -= 1
-            vehicles.controls = [veh for veh in vehicles.controls if veh.text != vehicle_button.text]
-            delete_events(vehicle_button.text)
+
+        def delete_vehicle(ev: Optional[ft.ControlEvent] = None) -> None:
+            # Capture label before mutating controls
+            label_to_remove = old_label
+            vehicles.controls[:] = [veh for veh in vehicles.controls if getattr(veh, "text", None) != label_to_remove]
+            delete_events(label_to_remove)
             save_vehicles()
             update_empty_state()
             page.update()
-            close_edit_vehicle_dialog() 
+            close_edit_vehicle_dialog()
 
         edit_vehicle_dialog.actions = [
             ft.Row(
@@ -143,8 +188,8 @@ def home_view(page: ft.Page):
                     ft.IconButton(
                         icon=ft.Icons.DELETE_OUTLINE,
                         icon_color=page.theme.color_scheme.error,
-                        on_click=delete_vehicle
-                        ),
+                        on_click=delete_vehicle,
+                    ),
                     ft.Container(expand=True),
                     ft.TextButton("Cancel", on_click=close_edit_vehicle_dialog),
                     ft.TextButton("Save", on_click=confirm_edit_vehicle),
@@ -155,10 +200,14 @@ def home_view(page: ft.Page):
 
         page.open(edit_vehicle_dialog)
 
-    def on_resize(e):
+    def on_resize(e: ft.ControlEvent) -> None:
         for veh in vehicles.controls:
-            veh.width = page.width * 0.8
+            try:
+                veh.width = page.width * 0.8
+            except Exception:
+                pass
         page.update()
+
     page.on_resize = on_resize
 
     load_vehicles()
@@ -193,7 +242,7 @@ def home_view(page: ft.Page):
                 leading=ft.Icon(ft.Icons.HOME),
             ),
         ],
-        floating_action_button = ft.FloatingActionButton(
+        floating_action_button=ft.FloatingActionButton(
             icon=ft.Icons.ADD,
             on_click=open_new_vehicle_dialog,
         ),
