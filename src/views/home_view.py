@@ -181,14 +181,29 @@ def home_view(page: ft.Page) -> ft.View:
             update_empty_state()
             page.update()
             close_edit_vehicle_dialog()
+            page.close(confirm_delete_vehicle_dialog)
+
+        confirm_delete_vehicle_dialog = ft.AlertDialog(
+            modal=True,
+            title=ft.Text("Delete Vehicle"),
+            content=ft.Text(f'Are you sure you want to delete vehicle "{old_label}" and all its events?'),
+            actions=[
+                ft.TextButton("Cancel", on_click=lambda _: page.close(confirm_delete_vehicle_dialog)),
+                ft.TextButton(
+                    "Delete",
+                    on_click=delete_vehicle,
+                    style=ft.ButtonStyle(color=page.theme.color_scheme.error),
+                ),
+            ],
+        )
 
         edit_vehicle_dialog.actions = [
             ft.Row(
                 [
                     ft.IconButton(
-                        icon=ft.Icons.DELETE_OUTLINE,
+                        icon=ft.Icons.DELETE,
                         icon_color=page.theme.color_scheme.error,
-                        on_click=delete_vehicle,
+                        on_click=lambda _: page.open(confirm_delete_vehicle_dialog),
                     ),
                     ft.Container(expand=True),
                     ft.TextButton("Cancel", on_click=close_edit_vehicle_dialog),
