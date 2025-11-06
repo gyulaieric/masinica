@@ -1,4 +1,5 @@
 import flet as ft
+import flet_permission_handler as fph
 from themes.catppuccin_theme import catppuccin_theme
 from views.home_view import home_view
 from views.vehicle_view import vehicle_view
@@ -7,6 +8,40 @@ from views.event_view import event_view
 def main(page: ft.Page):
     page.theme = catppuccin_theme("light")
     page.dark_theme = catppuccin_theme("dark")
+
+    ph = fph.PermissionHandler()
+    page.overlay.append(ph)
+    page.update()
+
+    async def open_app_settings(e):
+        await ph.open_app_settings_async()
+        page.go("/")
+
+    def close_permission_dialog(e):
+        page.close(permission_dialog)
+        page.go("/")
+
+    permission_dialog = ft.AlertDialog(
+        modal=True,
+        title= ft.Row(
+            [
+                ft.Icon(name=ft.Icons.NOTIFICATIONS),
+                ft.Text("Notifications"),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        content=ft.Text(
+            "Mașinică requires notification access to give you reminders when your vehicle's documents expire.\n\nPlease make sure notifications are enabled.",
+            text_align=ft.TextAlign.JUSTIFY,
+        ),
+        actions=[
+            ft.TextButton("Cancel", on_click=close_permission_dialog),
+            ft.TextButton(
+                "Open settings",
+                on_click=open_app_settings,
+            ),
+        ],
+    )
 
     def route_change(e: ft.RouteChangeEvent):
         page.views.clear()
@@ -28,6 +63,11 @@ def main(page: ft.Page):
 
     page.on_route_change = route_change
     page.on_view_pop = view_pop
-    page.go("/")
+
+    if page.client_storage.get("first_launch") is None:
+        page.open(permission_dialog)
+        page.client_storage.set("first_launch", False)
+    else:
+        page.go("/")
 
 ft.app(main)
