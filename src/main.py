@@ -15,6 +15,7 @@ def main(page: ft.Page):
 
     async def open_app_settings(e):
         await ph.open_app_settings_async()
+        page.client_storage.set("first_launch", False)
         page.go("/")
 
     permission_dialog = ft.AlertDialog(
@@ -61,7 +62,6 @@ def main(page: ft.Page):
 
     if page.client_storage.get("first_launch") is None:
         page.open(permission_dialog)
-        page.client_storage.set("first_launch", False)
     else:
         page.go("/")
 
