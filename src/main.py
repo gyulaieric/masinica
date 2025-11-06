@@ -17,10 +17,6 @@ def main(page: ft.Page):
         await ph.open_app_settings_async()
         page.go("/")
 
-    def close_permission_dialog(e):
-        page.close(permission_dialog)
-        page.go("/")
-
     permission_dialog = ft.AlertDialog(
         modal=True,
         title= ft.Row(
@@ -35,7 +31,6 @@ def main(page: ft.Page):
             text_align=ft.TextAlign.JUSTIFY,
         ),
         actions=[
-            ft.TextButton("Cancel", on_click=close_permission_dialog),
             ft.TextButton(
                 "Open settings",
                 on_click=open_app_settings,
