@@ -12,6 +12,15 @@ dependencies = [
   "flet-permission-handler>=0.1.0",
 ]
 
+[tool.flet.android]
+dependencies = [
+  "pyjnius"
+]
+
+[tool.flet.android.permission]
+"android.permission.ACCESS_NOTIFICATION" = true
+"android.permission.POST_NOTIFICATIONS" = true
+
 [tool.flet]
 # org name in reverse domain name notation, e.g. "com.mycompany".
 # Combined with project.name to build bundle ID for iOS and Android apps
@@ -33,6 +42,7 @@ path = "src"
 [tool.uv]
 dev-dependencies = [
     "flet[all]==0.28.3",
+    "pyjnius>=1.7.0",
 ]
 
 [tool.poetry]
